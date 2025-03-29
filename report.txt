@@ -1,0 +1,363 @@
+Missing Files Report
+========================================
+❌ No echocardiogram file found for card number: 0001695795131
+⚠️ Folder for SEP 0179R0270225V016444 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000656246259
+⚠️ Folder for SEP 0179R0270225V016657 is **missing**: D
+❌ No echocardiogram file found for card number: 0000656114038
+⚠️ Folder for SEP 0179R0270225V017027 is **missing**: D, G
+❌ No echocardiogram file found for card number: 0001698554169
+⚠️ Folder for SEP 0179R0270225V017589 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000085233227
+⚠️ Folder for SEP 0179R0270225V018156 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001468003915
+⚠️ Folder for SEP 0179R0270225V018253 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001126654018
+⚠️ Folder for SEP 0179R0270225V018103 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001833424975
+⚠️ Folder for SEP 0179R0270225V018029 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001833424975
+⚠️ Folder for SEP 0179R0270225V018029 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000095999747
+⚠️ Folder for SEP 0179R0270225V018451 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0002249382598
+⚠️ Folder for SEP 0179R0270225V018468 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001442055521
+⚠️ Folder for SEP 0179R0270225V018483 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001695820329
+⚠️ Folder for SEP 0179R0270225V018919 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000097268409
+⚠️ Folder for SEP 0179R0270225V018458 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001695727056
+⚠️ Folder for SEP 0179R0270225V018457 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000095887372
+⚠️ Folder for SEP 0179R0270225V018493 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000209598704
+⚠️ Folder for SEP 0179R0270225V018498 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001696011884
+⚠️ Folder for SEP 0179R0270225V019417 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000091805681
+⚠️ Folder for SEP 0179R0270225V018572 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001695786039
+⚠️ Folder for SEP 0179R0270225V018463 is **missing**: D
+❌ No echocardiogram file found for card number: 0003168266365
+⚠️ Folder for SEP 0179R0270225V018556 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001695801723
+⚠️ Folder for SEP 0179R0270225V019002 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000095933204
+⚠️ Folder for SEP 0179R0270225V018581 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000095733775
+⚠️ Folder for SEP 0179R0270225V018741 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000656150872
+⚠️ Folder for SEP 0179R0270225V018479 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000097310428
+⚠️ Folder for SEP 0179R0270225V018593 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000095698001
+⚠️ Folder for SEP 0179R0270225V019151 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000651263038
+⚠️ Folder for SEP 0179R0270225V019276 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096325378
+⚠️ Folder for SEP 0179R0270225V019092 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000095777897
+⚠️ Folder for SEP 0179R0270225V018666 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000656006984
+⚠️ Folder for SEP 0179R0270225V018610 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096467679
+⚠️ Folder for SEP 0179R0270225V018617 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002198928418
+⚠️ Folder for SEP 0179R0270225V018440 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002757607312
+⚠️ Folder for SEP 0179R0270225V018579 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001125646187
+⚠️ Folder for SEP 0179R0270225V018729 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001095537993
+⚠️ Folder for SEP 0179R0270225V019131 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001865043731
+⚠️ Folder for SEP 0179R0270225V019390 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000656999155
+⚠️ Folder for SEP 0179R0270225V018912 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000097490992
+⚠️ Folder for SEP 0179R0270225V018935 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001271609166
+⚠️ Folder for SEP 0179R0270225V019210 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003624609666
+⚠️ Folder for SEP 0179R0270225V018561 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003008973958
+⚠️ Folder for SEP 0179R0270225V018625 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000097465994
+⚠️ Folder for SEP 0179R0270225V018480 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000656186038
+⚠️ Folder for SEP 0179R0270225V018807 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000169775144
+⚠️ Folder for SEP 0179R0270225V018580 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001228963072
+⚠️ Folder for SEP 0179R0270225V018600 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000976422508
+⚠️ Folder for SEP 0179R0270225V019022 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003616755759
+⚠️ Folder for SEP 0179R0270225V019443 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000655926963
+⚠️ Folder for SEP 0179R0270225V018712 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003631688864
+⚠️ Folder for SEP 0179R0270225V018696 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000654698608
+⚠️ Folder for SEP 0179R0270225V018665 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001733385543
+⚠️ Folder for SEP 0179R0270225V018727 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096745915
+⚠️ Folder for SEP 0179R0270225V019333 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002891583022
+⚠️ Folder for SEP 0179R0270225V019038 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000074538088
+⚠️ Folder for SEP 0179R0270225V018711 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001900463512
+⚠️ Folder for SEP 0179R0270225V018545 is **missing**: D
+❌ No echocardiogram file found for card number: 0000096136053
+⚠️ Folder for SEP 0179R0270225V019152 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001102456359
+⚠️ Folder for SEP 0179R0270225V018759 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000097514155
+⚠️ Folder for SEP 0179R0270225V018670 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000097494197
+⚠️ Folder for SEP 0179R0270225V018478 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001885507885
+⚠️ Folder for SEP 0179R0270225V018885 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001696518257
+⚠️ Folder for SEP 0179R0270225V018967 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001335210524
+⚠️ Folder for SEP 0179R0270225V018492 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001834305761
+⚠️ Folder for SEP 0179R0270225V018524 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003515854239
+⚠️ Folder for SEP 0179R0270225V018570 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000093765969
+⚠️ Folder for SEP 0179R0270225V018911 is **missing**: D
+❌ No echocardiogram file found for card number: 0000095927872
+⚠️ Folder for SEP 0179R0270225V018676 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0002052806196
+⚠️ Folder for SEP 0179R0270225V018467 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003104855425
+⚠️ Folder for SEP 0179R0270225V018914 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000094482775
+⚠️ Folder for SEP 0179R0270225V018667 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000096477996
+⚠️ Folder for SEP 0179R0270225V018736 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000095114621
+⚠️ Folder for SEP 0179R0270225V018628 is **missing**: D
+❌ No echocardiogram file found for card number: 0001035635589
+⚠️ Folder for SEP 0179R0270225V018782 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002276911495
+⚠️ Folder for SEP 0179R0270225V018562 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002205616432
+⚠️ Folder for SEP 0179R0270225V018758 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001971813486
+⚠️ Folder for SEP 0179R0270225V018491 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001695687456
+⚠️ Folder for SEP 0179R0270225V018574 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000096679787
+⚠️ Folder for SEP 0179R0270225V018521 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003059641967
+⚠️ Folder for SEP 0179R0270225V018460 is **missing**: D, G
+❌ No echocardiogram file found for card number: 0000087920829
+⚠️ Folder for SEP 0179R0270225V018803 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001436758784
+⚠️ Folder for SEP 0179R0270225V018753 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002882441485
+⚠️ Folder for SEP 0179R0270225V018738 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001436758007
+⚠️ Folder for SEP 0179R0270225V018755 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002240899648
+⚠️ Folder for SEP 0179R0270225V018836 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001527000873
+⚠️ Folder for SEP 0179R0270225V018844 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000067461851
+⚠️ Folder for SEP 0179R0270225V018797 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002251202613
+⚠️ Folder for SEP 0179R0270225V018869 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002206839148
+⚠️ Folder for SEP 0179R0270225V018563 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003142714476
+⚠️ Folder for SEP 0179R0270225V018652 is **missing**: D
+❌ No echocardiogram file found for card number: 0002289327366
+⚠️ Folder for SEP 0179R0270225V018784 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000097542134
+⚠️ Folder for SEP 0179R0270225V018722 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000097353821
+⚠️ Folder for SEP 0179R0270225V018800 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096348183
+⚠️ Folder for SEP 0179R0270225V018502 is **missing**: D
+❌ No echocardiogram file found for card number: 0003156189671
+⚠️ Folder for SEP 0179R0270225V018831 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096590114
+⚠️ Folder for SEP 0179R0270225V018588 is **missing**: D, G
+❌ No echocardiogram file found for card number: 0000096873917
+⚠️ Folder for SEP 0179R0270225V018840 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003095020247
+⚠️ Folder for SEP 0179R0270225V018947 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000096690238
+⚠️ Folder for SEP 0179R0270225V018799 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0002817301375
+⚠️ Folder for SEP 0179R0270225V018883 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001634249417
+⚠️ Folder for SEP 0179R0270225V018886 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001462687064
+⚠️ Folder for SEP 0179R0270225V018877 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001086178882
+⚠️ Folder for SEP 0179R0270225V018891 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003003607855
+⚠️ Folder for SEP 0179R0270225V018881 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001652168182
+⚠️ Folder for SEP 0179R0270225V018511 is **missing**: D
+❌ No echocardiogram file found for card number: 0001390544201
+⚠️ Folder for SEP 0179R0270225V018903 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001390546056
+⚠️ Folder for SEP 0179R0270225V018908 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000656511895
+⚠️ Folder for SEP 0179R0270225V018484 is **missing**: D
+❌ No echocardiogram file found for card number: 0000096580798
+⚠️ Folder for SEP 0179R0270225V018808 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000155830127
+⚠️ Folder for SEP 0179R0270225V018770 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001472594962
+⚠️ Folder for SEP 0179R0270225V018526 is **missing**: D, G
+❌ No echocardiogram file found for card number: 0001823643358
+⚠️ Folder for SEP 0179R0270225V018813 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001695676329
+⚠️ Folder for SEP 0179R0270225V018863 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001103804111
+⚠️ Folder for SEP 0179R0270225V018520 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000656636196
+⚠️ Folder for SEP 0179R0270225V018882 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001846212963
+⚠️ Folder for SEP 0179R0270225V018442 is **missing**: D, G
+❌ No echocardiogram file found for card number: 0000655278636
+⚠️ Folder for SEP 0179R0270225V018489 is **missing**: D
+❌ No echocardiogram file found for card number: 0000656552125
+⚠️ Folder for SEP 0179R0270225V018936 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001125836886
+⚠️ Folder for SEP 0179R0270225V018962 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000655692682
+⚠️ Folder for SEP 0179R0270225V018541 is **missing**: D
+❌ No echocardiogram file found for card number: 0002883081115
+⚠️ Folder for SEP 0179R0270225V018691 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000655886856
+⚠️ Folder for SEP 0179R0270225V018516 is **missing**: D
+❌ No echocardiogram file found for card number: 0000096122531
+⚠️ Folder for SEP 0179R0270225V018974 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000022466013
+⚠️ Folder for SEP 0179R0270225V018872 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001879069533
+⚠️ Folder for SEP 0179R0270225V019015 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001696292818
+⚠️ Folder for SEP 0179R0270225V018997 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096304397
+⚠️ Folder for SEP 0179R0270225V019025 is **missing**: D, E
+📄 Copied FRANSISKUS XAVERIUS TURUT_0000095766557_285183_ECHO.pdf → /home/fathnan/Downloads/Asterix/2025_02_21_RAJAL/FRANSISKUS XAVERIUS TURUT 0179R0270225V019064 285183
+⚠️ Folder for SEP 0179R0270225V019064 is **missing**: E, G
+❌ No echocardiogram file found for card number: 0001845243922
+⚠️ Folder for SEP 0179R0270225V019083 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003046567206
+⚠️ Folder for SEP 0179R0270225V019030 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001695713501
+⚠️ Folder for SEP 0179R0270225V019087 is **missing**: D
+❌ No echocardiogram file found for card number: 0001821576475
+⚠️ Folder for SEP 0179R0270225V019170 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000654791545
+⚠️ Folder for SEP 0179R0270225V018980 is **missing**: D, G
+❌ No echocardiogram file found for card number: 0000097459435
+⚠️ Folder for SEP 0179R0270225V019102 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002480489212
+⚠️ Folder for SEP 0179R0270225V019084 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001528842824
+⚠️ Folder for SEP 0179R0270225V019192 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000105561404
+⚠️ Folder for SEP 0179R0270225V019183 is **missing**: D, E, G
+📄 Copied JAZILAH_0000650078717_277175_ECHO.pdf → /home/fathnan/Downloads/Asterix/2025_02_21_RAJAL/JAZILAH 0179R0270225V019155 277175
+⚠️ Folder for SEP 0179R0270225V019155 is **missing**: G
+❌ No echocardiogram file found for card number: 0000655786631
+⚠️ Folder for SEP 0179R0270225V019201 is **missing**: D
+❌ No echocardiogram file found for card number: 0000095781453
+⚠️ Folder for SEP 0179R0270225V019105 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003142684146
+⚠️ Folder for SEP 0179R0270225V019196 is **missing**: D
+❌ No echocardiogram file found for card number: 0001859139652
+⚠️ Folder for SEP 0179R0270225V019237 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096326471
+⚠️ Folder for SEP 0179R0270225V019239 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000094315476
+⚠️ Folder for SEP 0179R0270225V019144 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003349363048
+⚠️ Folder for SEP 0179R0270225V019295 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000043575309
+⚠️ Folder for SEP 0179R0270225V019325 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003156244503
+⚠️ Folder for SEP 0179R0270225V019280 is **missing**: D
+❌ No folder found for SEP: 0179R0270225V019367
+❌ No echocardiogram file found for card number: 0000095719634
+⚠️ Folder for SEP 0179R0270225V019070 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000655885001
+⚠️ Folder for SEP 0179R0270225V019259 is **missing**: D
+❌ No echocardiogram file found for card number: 0001035649372
+⚠️ Folder for SEP 0179R0270225V019313 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001402196409
+⚠️ Folder for SEP 0179R0270225V019374 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000208272925
+⚠️ Folder for SEP 0179R0270225V018972 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001450922365
+⚠️ Folder for SEP 0179R0270225V019323 is **missing**: D, G
+❌ No echocardiogram file found for card number: 0001697546024
+⚠️ Folder for SEP 0179R0270225V019435 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003051029722
+⚠️ Folder for SEP 0179R0270225V019437 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001532136802
+⚠️ Folder for SEP 0179R0270225V019382 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000097591241
+⚠️ Folder for SEP 0179R0270225V019365 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000655689554
+⚠️ Folder for SEP 0179R0270225V019349 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000095346099
+⚠️ Folder for SEP 0179R0270225V019363 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001695926002
+⚠️ Folder for SEP 0179R0270225V019446 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001035843243
+⚠️ Folder for SEP 0179R0270225V019467 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002701463523
+⚠️ Folder for SEP 0179R0270225V019317 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0000657022724
+⚠️ Folder for SEP 0179R0270225V019477 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001482994563
+⚠️ Folder for SEP 0179R0270225V019485 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000653936264
+⚠️ Folder for SEP 0179R0270225V019449 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002165202898
+⚠️ Folder for SEP 0179R0270225V019458 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003340223122
+⚠️ Folder for SEP 0179R0270225V019484 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0003343742043
+⚠️ Folder for SEP 0179R0270225V019109 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096894472
+⚠️ Folder for SEP 0179R0270225V019495 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001799213411
+⚠️ Folder for SEP 0179R0270225V019448 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001171796477
+⚠️ Folder for SEP 0179R0270225V019465 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000656437656
+⚠️ Folder for SEP 0179R0270225V019472 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000106349973
+⚠️ Folder for SEP 0179R0270225V019483 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0000096834014
+⚠️ Folder for SEP 0179R0270225V019499 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002482617194
+⚠️ Folder for SEP 0179R0270225V019489 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0002357356465
+⚠️ Folder for SEP 0179R0270225V019514 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0003421205526
+⚠️ Folder for SEP 0179R0270225V019455 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001259854075
+⚠️ Folder for SEP 0179R0270225V019500 is **missing**: D, E, G
+❌ No echocardiogram file found for card number: 0001078517654
+⚠️ Folder for SEP 0179R0270225V019512 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001432522394
+⚠️ Folder for SEP 0179R0270225V019498 is **missing**: D, E
+❌ No echocardiogram file found for card number: 0001620581027
+⚠️ Folder for SEP 0179R0270225V019300 is **missing**: D, E, G
