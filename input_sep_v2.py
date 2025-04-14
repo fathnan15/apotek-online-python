@@ -65,9 +65,13 @@ while i <= len(sheet["B"]):
 
             if "Simpan Berhasil" in alert_text:
                 print(f"Row {i} {sep_no} - Success!")
+                sheet[f'D{i}'].value = "Success"
+                wb.save(file_path)
             else:
                 # ✅ Write error message to column E
-                sheet[f'D{i}'].value = alert_text
+                sheet[f'D{i}'].value = "failed"
+                wb.save(file_path)
+                sheet[f'E{i}'].value = alert_text
                 print(f"Row {i} {sep_no} - Error: {alert_text}")
 
                 # ✅ Click Reset before continuing
@@ -91,9 +95,6 @@ while i <= len(sheet["B"]):
         failed_list.append(sep_no)
 
     i += 1
-
-# ✅ Save the updated Excel file
-wb.save(file_path)
 
 print("Process Completed")
 # print("Failed Entries:", failed_list)
