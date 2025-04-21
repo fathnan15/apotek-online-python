@@ -26,10 +26,15 @@ i = 2  # Start from row 2
 while i <= len(sheet["B"]):
     sep_no = sheet[f'B{i}'].value
     receipt_no = sheet[f'C{i}'].value
+    status_cd = sheet[f'D{i}'].value
 
     if sep_no is None and receipt_no is None:
         i += 1
         failed_list.append(sep_no)
+        continue
+
+    if status_cd == "normal" and status_cd is not None:
+        i += 1
         continue
 
     try:
@@ -53,25 +58,27 @@ while i <= len(sheet["B"]):
 
         # ✅ Input No Resep
         driver.find_element(By.ID, "ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_txtNoResep_I").send_keys(receipt_no)
+        
+        WebDriverWait(driver, 5)
 
         # ✅ Click "Simpan"
         driver.find_element(By.ID, "ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_BtnSimpan_CD").click()
 
         # ✅ Wait for Alert
         try:
-            alert = WebDriverWait(driver, 5).until(EC.alert_is_present())
+            alert = WebDriverWait(driver, 10).until(EC.alert_is_present())
             alert_text = alert.text.strip()
             alert.accept()  # Click "OK"
 
             if "Simpan Berhasil" in alert_text:
-                print(f"Row {i} {sep_no} - Success!")
-                sheet[f'D{i}'].value = "Success"
+                sheet[f'D{i}'].value = "normal"
                 wb.save(file_path)
+                print(f"Row {i} {sep_no} - Success!")
             else:
                 # ✅ Write error message to column E
-                sheet[f'D{i}'].value = "failed"
-                wb.save(file_path)
+                sheet[f'D{i}'].value = "error"
                 sheet[f'E{i}'].value = alert_text
+                wb.save(file_path)
                 print(f"Row {i} {sep_no} - Error: {alert_text}")
 
                 # ✅ Click Reset before continuing
