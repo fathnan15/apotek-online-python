@@ -1,80 +1,78 @@
 # apotek_runner.py
 
 from playwright.sync_api import TimeoutError as PWTimeoutError, sync_playwright
-from config import APOTEK_URL
-from datetime import datetime
+from config import APOTEK_URL, APOTEK_SELECTORS
 
 _playwright_apo = None
 _browser_apo    = None
 _page_apo       = None
 
 def init_apotek(cdp_endpoint: str = "http://127.0.0.1:9222"):
-    """Attach to your running Chrome and navigate to the Apotek BPJS form."""
+    """Attach to Chrome CDP and navigate to the Apotek BPJS form."""
     global _playwright_apo, _browser_apo, _page_apo
     _playwright_apo = sync_playwright().start()
     _browser_apo    = _playwright_apo.chromium.connect_over_cdp(cdp_endpoint)
     ctx             = _browser_apo.contexts[0] if _browser_apo.contexts else _browser_apo.new_context()
     _page_apo       = ctx.pages[0] if ctx.pages else ctx.new_page()
     _page_apo.goto(APOTEK_URL, timeout=10000)
-    # If you need to log in first, do it here before returning.
+    print("✅ Connected to Apotek form.")
 
 def submit_to_apotek(sep: str, receipt: str, rec_type: str) -> tuple[str, str]:
-    """
-    1) Input SEP → click 'Cari'
-    2) Wait for 'No Kartu' field to fill
-    3) Select 'Jenis Resep'
-    4) Click 'Simpan'
-    5) Capture alert; on success return 'normal', on error click 'Reset' and return 'error'
-    """
-    global _page_apo
+    sel = APOTEK_SELECTORS
     try:
-        # 1) Fill SEP and click Cari
-        _page_apo.fill("input#TxtSEP", sep)               # ← adjust selector
-        _page_apo.click("input[value='Cari']")            # ← adjust selector/value
+        sep_str      = str(sep)
+        receipt_str  = str(receipt)
+        rec_type_str = str(rec_type)
 
-        # 2) Wait for No Kartu to populate
-        _page_apo.wait_for_function(
-            "() => document.querySelector('input#TxtNoKartu').value.trim() !== ''",
-            timeout=5000
-        )
+        # 1) Fill SEP → click “Cari”
+        _page_apo.fill(sel['sep_input'], sep_str)
+        # 5) Fill prescription number → pause 1 s
+        _page_apo.fill(sel['receipt_input'], receipt_str)
+        _page_apo.wait_for_timeout(1000)
+        _page_apo.click(sel['cari_button'])
 
-        # 3) Select the right 'Jenis Resep'
-        _page_apo.select_option(
-            "select#cboJnsResep",                         # ← adjust selector
-            label=rec_type
-        )
-
-        # 4) Fill No Resep (if needed)
-        _page_apo.fill("input#TxtNoResep", receipt)        # ← adjust selector
-
-        # 5) Click Simpan
-        _page_apo.click("input[value='Simpan']")           # ← adjust selector/value
-
-        # 6) Handle the alert
+        # 2) Immediate‐alert check (error path)
         try:
-            with _page_apo.expect_dialog(timeout=5000) as dlg:
-                pass
-            msg = dlg.value.message
-            dlg.value.accept()
+            dlg = _page_apo.wait_for_event("dialog", timeout=2000)
+            err_msg = dlg.message
+            dlg.accept()
+            _page_apo.click(sel['reset_button'])
+            return ("error", err_msg)
+        except PWTimeoutError:
+            pass  # no alert → continue
 
+        # 3) Wait up to 3 s for “No Kartu” to populate
+        _page_apo.wait_for_selector(
+            sel['no_kartu_input'],
+            state="attached",
+            timeout=3000
+        )
+
+        # 4) Fill receipt_type (input tag) → pause 1 s
+        _page_apo.fill(sel['receipt_type_input'], rec_type_str)
+        _page_apo.wait_for_timeout(1000)
+
+
+        # 6) Click “Simpan”
+        _page_apo.click(sel['simpan_button'])
+
+        # 7) Handle confirmation
+        try:
+            dlg = _page_apo.wait_for_event("dialog", timeout=5000)
+            msg = dlg.message
+            dlg.accept()
             if "Simpan Berhasil" in msg:
                 return ("normal", msg)
-            else:
-                # on any other alert, reset form
-                _page_apo.click("input[value='Reset']")    # ← adjust selector/value
-                return ("error", msg)
-
+            _page_apo.click(sel['reset_button'])
+            return ("error", msg)
         except PWTimeoutError:
-            # No alert—treat as failure
-            _page_apo.click("input[value='Reset']")        # ← adjust selector/value
+            _page_apo.click(sel['reset_button'])
             return ("error", "No confirmation alert")
 
     except Exception as e:
-        # Unexpected exception
         return ("error", str(e))
-
 def close_apotek():
-    """Tear down the Apotek session."""
+    """Tear down the Apotek Playwright session."""
     global _browser_apo, _playwright_apo
     if _browser_apo:
         _browser_apo.close()
