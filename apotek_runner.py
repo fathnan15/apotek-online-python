@@ -24,39 +24,30 @@ def submit_to_apotek(sep: str, receipt: str, rec_type: str) -> tuple[str, str]:
         receipt_str  = str(receipt)
         rec_type_str = str(rec_type)
 
-        # 1) Fill SEP → click “Cari”
         _page_apo.fill(sel['sep_input'], sep_str)
-        # 5) Fill prescription number → pause 1 s
         _page_apo.fill(sel['receipt_input'], receipt_str)
-        _page_apo.wait_for_timeout(1000)
         _page_apo.click(sel['cari_button'])
 
-        # 2) Immediate‐alert check (error path)
         try:
-            dlg = _page_apo.wait_for_event("dialog", timeout=2000)
+            dlg = _page_apo.wait_for_event("dialog", timeout=1000)
             err_msg = dlg.message
             dlg.accept()
             _page_apo.click(sel['reset_button'])
             return ("error", err_msg)
         except PWTimeoutError:
-            pass  # no alert → continue
+            pass 
 
-        # 3) Wait up to 3 s for “No Kartu” to populate
         _page_apo.wait_for_selector(
             sel['no_kartu_input'],
             state="attached",
-            timeout=3000
+            timeout=2000
         )
 
-        # 4) Fill receipt_type (input tag) → pause 1 s
         _page_apo.fill(sel['receipt_type_input'], rec_type_str)
         _page_apo.wait_for_timeout(1000)
 
-
-        # 6) Click “Simpan”
         _page_apo.click(sel['simpan_button'])
 
-        # 7) Handle confirmation
         try:
             dlg = _page_apo.wait_for_event("dialog", timeout=5000)
             msg = dlg.message

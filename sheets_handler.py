@@ -41,8 +41,13 @@ def write_initial_sep_rows(ws_sep, records: list[dict]):
 
 
 def read_all_records(ws) -> list[dict]:
-    """Reads all rows into list of dicts keyed by headers."""
-    return ws.get_all_records()
+    values = ws.get_all_values()
+    if not values:
+        return []
+    headers = values[0]
+    data    = values[1:]
+    records = [dict(zip(headers, row)) for row in data]
+    return records
 
 
 def update_sep_row(ws_sep, row_index: int, status: str, note: str):

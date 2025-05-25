@@ -3,3 +3,5 @@ google-chrome \
   --user-data-dir="/tmp/playwright-profile" \
   --no-first-run \
   --no-default-browser-check
+
+pip install -r requirements.txt
