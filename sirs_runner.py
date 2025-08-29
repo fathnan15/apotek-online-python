@@ -21,10 +21,33 @@ def init_sirs_manual(cdp_endpoint: str = "http://127.0.0.1:9222"):
     _page       = ctx.pages[0] if ctx.pages else ctx.new_page()
 
     # Navigate if you haven’t already:
-    _page.goto(SIRS_APP_URL, timeout=10000)
+    if _page.url != SIRS_APP_URL:
+        try:
+            _page.goto(SIRS_APP_URL, timeout=10000)
+        except PWTimeoutError:
+            print("⚠️  Timeout while navigating to SIRS app. Please ensure the URL is correct.")
+            return
+    # _page.goto(SIRS_APP_URL, timeout=10000)
 
-    print("\n⚙️  Please switch to Chrome, set your filters, and click 'Tampilkan'.")
-    input("When the table is visible, press ⏎ Enter to continue…")
+    # urut = input("Enter the urut to filter by: ")
+    # jenis_rawat = input("Enter the jenis_rawat to filter by: ")
+    date = input("Enter the date (DD) to filter by: ")
+    bulan = input("Enter the bulan to filter by: ")
+
+    _page.select_option("#urut", "Nama")
+    _page.select_option("#jenis_rawat", "Rawat Jalan")
+    _page.select_option("#tanggal", date)
+    _page.select_option("#bulan", bulan)
+    _page.locator("input[type='button'][value='Tampilkan']").click()
+
+    print("⏳ Waiting for process to start...")
+    _page.wait_for_selector("#dv_process_start", state="attached", timeout=15000)
+    print("⏳ Process started. Waiting for process to finish...")
+    _page.wait_for_selector("#dv_process_start", state="detached", timeout=120000)
+    print("✅ Process finished. Table should be visible.")
+    
+    # print("\n⚙️  Please switch to Chrome, set your filters, and click 'Tampilkan'.")
+    # input("When the table is visible, press ⏎ Enter to continue…")
 
 
 def get_claim_records() -> list[dict]:
@@ -41,12 +64,16 @@ def get_claim_records() -> list[dict]:
     for i in range(rows.count()):
         row = rows.nth(i)
         sep_num     = row.locator("td").nth(3).inner_text().strip()
+        mrn     = row.locator("td").nth(1).inner_text().strip().replace("-", "")
         dttm_sep     = row.locator("td").nth(4).inner_text().strip()
         onclick = row.locator("input[value='Print Resep']").get_attribute("onclick") or ""
         m = re.search(r'print_prescription\("([^"]+)"', onclick)
         receipt = m.group(1) if m else ""
         receipt = receipt[-5:] if receipt.isdigit() and len(receipt) >= 5 else receipt
-        records.append({"dttm_sep":dttm_sep, "sep_num": sep_num, "receipt_num": receipt})
+        records.append({"dttm_sep":dttm_sep, "mrn" : mrn, "sep_num": sep_num, "receipt_num": receipt})
+
+    _page.locator("input[type='button'][value='Download']").click()
+    print("⏳ Downloading .....")
     return records
 
 def close():

@@ -3,6 +3,8 @@
 from sheets_handler import get_worksheet, read_all_records, update_sep_row
 from apotek_runner  import init_apotek, submit_to_apotek, close_apotek
 from config import WORKSHEET_NAME
+import time
+import sys
 
 
 def main():
@@ -25,10 +27,19 @@ def main():
         receipt_num = str(row.get("receipt_num", "")).strip()
 
         print(f"▶️  Submitting row {idx}: SEP={sep_num}, Receipt={receipt_num}, Type={rec_type}")
+        loading = ["|", "/", "-", "\\"]
+        for i in range(10):
+            sys.stdout.write(f"\rSubmitting... {loading[i % len(loading)]}")
+            sys.stdout.flush()
+            time.sleep(0.1)
+        sys.stdout.write("\r" + " " * 20 + "\r")  # Clear the line
+            
         status, note = submit_to_apotek(sep_num, receipt_num, rec_type)
+        
 
         update_sep_row(ws, idx, status, note)
         print(f"✅ Row {idx} updated: status={status}, note={note}")
+        print(f"____________________________________________________________________")
 
     close_apotek()
     print("✅ All submissions complete.")

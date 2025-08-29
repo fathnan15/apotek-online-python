@@ -24,20 +24,34 @@ def write_initial_sep_rows(ws_sep, records: list[dict]):
       A: dttm_sep, B: sep_num, C: receipt_num, D: receipt_type,
       E: updated_dttm, F: status, G: note
     """
-    rows = [SEP_SHEET_HEADERS] + [
+    # rows = [SEP_SHEET_HEADERS] + [
+    #     [
+    #         rec["dttm_sep"],    # original visit date/time
+    #         rec["mrn"],         # medical record number
+    #         rec["sep_num"],     # SEP number
+    #         rec["receipt_num"], # prescription number
+    #         "",                 # receipt_type (manual entry)
+    #         "",                 # updated_dttm (to be filled on submission)
+    #         "",                 # status
+    #         ""                  # note
+    #     ]
+    #     for rec in records
+    # ]
+    # ws_sep.clear()
+    # ws_sep.update("A1", rows)
+
+    rows =[
         [
             rec["dttm_sep"],    # original visit date/time
+            rec["mrn"],         # medical record number
             rec["sep_num"],     # SEP number
             rec["receipt_num"], # prescription number
-            "",                 # receipt_type (manual entry)
-            "",                 # updated_dttm (to be filled on submission)
-            "",                 # status
-            ""                  # note
+            "Obat Kronis Blm Stabil", # receipt_type (manual entry)
         ]
         for rec in records
     ]
-    ws_sep.clear()
-    ws_sep.update("A1", rows)
+    print(f"Writing {len(rows)} records to Google Sheet...")
+    ws_sep.append_rows(rows)
 
 
 def read_all_records(ws) -> list[dict]:
@@ -59,8 +73,8 @@ def update_sep_row(ws_sep, row_index: int, status: str, note: str):
     """
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     batch = [
-        {"range": f"E{row_index}", "values": [[ts]]},
-        {"range": f"F{row_index}", "values": [[status]]},
-        {"range": f"G{row_index}", "values": [[note or '-']]}
+        {"range": f"F{row_index}", "values": [[ts]]},
+        {"range": f"G{row_index}", "values": [[status]]},
+        {"range": f"H{row_index}", "values": [[note or '-']]}
     ]
     ws_sep.batch_update(batch)

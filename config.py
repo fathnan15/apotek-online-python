@@ -28,6 +28,7 @@ SERVICE_ACCOUNT_PATH = "./keys/sep-sync-bot.json"
 # — Column headers for sep_web_driver (A→G) —  
 SEP_SHEET_HEADERS = [  
     "sep_dttm",      # A: timestamp
+    "mrn",           # B: medical record number
     "sep_num",       # B: SEP number
     "receipt_num",   # C: prescription number
     "receipt_type",  # D: “Obat Kronis Blm Stabil” or “Obat Kemoterapi”

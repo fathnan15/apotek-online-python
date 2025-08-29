@@ -15,6 +15,7 @@ def main():
     ws = get_worksheet(WORKSHEET_NAME)
     write_initial_sep_rows(ws, records)
     print(f"✅ Wrote {len(records)} records into your sheet.")
+    exit()
 
 if __name__ == "__main__":
     main()
