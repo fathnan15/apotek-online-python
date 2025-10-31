@@ -1,4 +1,3 @@
-# auto_input_obat_safe.py
 from playwright.sync_api import sync_playwright
 import gspread
 from google.oauth2.service_account import Credentials
@@ -135,12 +134,18 @@ def auto_input():
             # safe_update_cell(ws_resep, f"G{i}", "")
             print(f"✅ Resep {no_resep} marked done (no pending obat).")
             continue
-        
+
+        # NAVIGATE to DaftarResep and wait specifically for the filter input (more precise than networkidle)
         page.goto(BASE_URL + "DaftarResep.aspx")
-        page.wait_for_load_state("networkidle")
+        try:
+            page.locator(SELECTORS["resep_filter"]).wait_for(timeout=10000)
+        except Exception:
+            # fallback: small wait if the filter didn't appear quickly
+            time.sleep(1)
+
+        # fill filter and press Enter; then wait for the resep text to appear
         page.fill(SELECTORS["resep_filter"], no_resep)
         page.keyboard.press("Enter")
-
         try:
             page.wait_for_selector(f"text={no_resep}", timeout=15000)
         except Exception:
@@ -148,32 +153,40 @@ def auto_input():
             safe_update_cell(ws_resep, f"G{i}", "not_found")
             continue
 
-        print("🕐 Clicking Input Obat button…")
-        # Wait until grid finishes loading before clicking
+        print("🕐 Waiting for Input Obat button to be ready…")
+        # Wait for the Input Obat button locator to be attached & visible (avoid stale handles)
         try:
-            # Wait for overlay to appear and then disappear
-            page.wait_for_selector("div.dxgvLoadingDiv_Glass", state="visible", timeout=5000)
-            page.wait_for_selector("div.dxgvLoadingDiv_Glass", state="hidden", timeout=15000)
-        except:
-            # Overlay might not appear at all (already loaded)
-            pass
-
-        # Re-locate the button (old handles may be detached)
-        buttons = page.query_selector_all(SELECTORS["btn_input_obat"])
-        if not buttons:
-            print(f"❌ No Input Obat button found for resep {no_resep}")
+            btn_locator = page.locator(SELECTORS["btn_input_obat"]).first
+            btn_locator.wait_for(state="visible", timeout=10000)
+            # wait for any loading overlay to disappear (shorter timeouts)
+            try:
+                page.wait_for_selector("div.dxgvLoadingDiv_Glass", state="hidden", timeout=8000)
+            except:
+                pass
+            btn_locator.click()
+        except Exception as e:
+            print(f"❌ Could not click Input Obat button for resep {no_resep}: {e}")
             continue
 
-        # Now click safely
-        buttons[0].click()
-
-        # ⏳ Wait until redirected to ObatInput.aspx (instead of fixed sleep)
+        # Wait for ObatInput.aspx by URL pattern (keeps you from using long sleeps)
         try:
-            page.wait_for_url("**/ObatInput.aspx", timeout=30000)
-            page.wait_for_load_state("networkidle")
-            print("✅ ObatInput.aspx fully loaded.")
+            page.wait_for_url("**/ObatInput.aspx", timeout=25000)
+            # ensure kode input is ready
+            page.locator(SELECTORS["kode_obat"]).wait_for(state="visible", timeout=10000)
+            print("✅ ObatInput.aspx loaded.")
         except Exception:
-            print("⚠️ Timeout waiting for ObatInput.aspx, continue anyway.")
+            print("⚠️ ObatInput.aspx might not have loaded fully (continuing nonetheless).")
+
+        # Pre-define listbox selectors used in autocomplete flow
+        LISTBOX_SELECTOR = "table[id$='CboKdObatNR_DDD_L_LBT']"
+        FIRST_ITEM_ROW = "table[id$='CboKdObatNR_DDD_L_LBT'] tr.dxeListBoxItemRow_Glass"
+        FIRST_ITEM_KD_CELL = "table[id$='CboKdObatNR_DDD_L_LBT'] td[id$='_LBI0T0']"
+
+        def read_kode_input_value():
+            try:
+                return page.eval_on_selector(SELECTORS["kode_obat"], "el => el.value").strip()
+            except Exception:
+                return ""
 
         for obat in related_obats:
             kode = str(obat.get("apol_id", "")).strip()
@@ -182,23 +195,82 @@ def auto_input():
                 continue
 
             print(f"  💊 Inputting {kode} x{qty} …")
-            page.fill(SELECTORS["kode_obat"], "")
-            # page.click(SELECTORS["kode_obat"])
-            page.type(SELECTORS["kode_obat"], kode, delay=100)
-            time.sleep(1)
-            page.keyboard.press("ArrowDown")
-            page.keyboard.press("Enter")
 
-            time.sleep(1)
+            # --- robust autocomplete selection (optimized timing) ---
+            page.fill(SELECTORS["kode_obat"], "")
+            # tiny pause to ensure clear has propagated
+            time.sleep(0.08)
+
+            # ensure the input is focused using locator.click (less brittle)
+            kode_loc = page.locator(SELECTORS["kode_obat"])
+            kode_loc.click()
+            # faster typing but still human-like; reduced delay to speed up
+            page.type(SELECTORS["kode_obat"], kode, delay=60)
+
+            # WAIT: prefer direct click on list item if it appears — faster & reliable
+            try:
+                page.wait_for_selector(LISTBOX_SELECTOR, timeout=4500)
+                # try clicking the first cell (KD cell) then the row
+                try:
+                    page.locator(FIRST_ITEM_KD_CELL).first.click(timeout=2000)
+                except Exception:
+                    try:
+                        page.locator(FIRST_ITEM_ROW).first.click(timeout=2000)
+                    except Exception:
+                        # fallback to keyboard selection
+                        page.keyboard.press("ArrowDown")
+                        time.sleep(0.08)
+                        page.keyboard.press("Enter")
+            except Exception:
+                # listbox didn't show — fallback to keyboard selection with brief wait
+                time.sleep(0.45)
+                page.keyboard.press("ArrowDown")
+                time.sleep(0.08)
+                page.keyboard.press("Enter")
+
+            # short verification pause (reduced)
+            time.sleep(0.35)
+
+            selected_val = read_kode_input_value()
+            ui_ok = bool(selected_val and (kode in selected_val or selected_val in kode))
+            if not ui_ok:
+                # secondary DOM presence check (cheap)
+                try:
+                    found = page.query_selector(f"xpath=//table[contains(@id,'TabPageObat')]//td[contains(., '{kode}')]")
+                    ui_ok = bool(found)
+                except:
+                    ui_ok = False
+
+            if not ui_ok:
+                print(f"⚠️ Autocomplete selection for {kode} may have failed — selected_val='{selected_val}'. Retrying once.")
+                # single retry (light)
+                page.fill(SELECTORS["kode_obat"], "")
+                time.sleep(0.08)
+                kode_loc.click()
+                page.type(SELECTORS["kode_obat"], kode, delay=70)
+                try:
+                    page.wait_for_selector(LISTBOX_SELECTOR, timeout=3500)
+                    page.locator(FIRST_ITEM_KD_CELL).first.click(timeout=1500)
+                except:
+                    page.keyboard.press("ArrowDown")
+                    page.keyboard.press("Enter")
+                time.sleep(0.5)
+                selected_val = read_kode_input_value()
+                ui_ok = bool(selected_val and (kode in selected_val or selected_val in kode))
+
+            if not ui_ok:
+                print(f"❌ Failed to reliably select kode {kode}. Selected value after retry: '{selected_val}'. Skipping this obat for now.")
+                continue
+
+            # Fill qty & save (kept intact), with small throttle
+            time.sleep(0.5)
             page.fill(SELECTORS["qty_obat"], qty)
             page.click(SELECTORS["btn_simpan"])
-
             message = handle_dialog(page)
             print(f"💬 {message or 'No alert dialog detected.'}")
 
             # Update Google Sheet immediately
             row = obat_row_map.get((no_resep, kode))
-            
             if not row:
                 print(f"DEBUG: lookup key=({no_resep}, {kode})")
                 print("DEBUG: available keys (sample):", list(obat_row_map.keys())[:5])
@@ -208,11 +280,14 @@ def auto_input():
                 print(f"  ✅ Updated row {row} for obat {kode}")
             else:
                 print(f"⚠️ Could not find row for resep {no_resep}, obat {kode}")
-            time.sleep(1)
 
+            # short cooldown between obat items (reduced)
+            time.sleep(0.9)
+
+        # mark resep done (using safe writer)
         safe_update_cell(ws_resep, f"G{i}", "done")
         print(f"✅ Resep {no_resep} completed.")
-        time.sleep(2.5)
+        time.sleep(1.5)  # shorter between resep
 
     browser.close()
     print("🏁 All resep processed safely and completely.")
