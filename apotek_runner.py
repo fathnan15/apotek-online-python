@@ -25,7 +25,7 @@ def submit_to_apotek(sep: str, receipt: str, rec_type: str) -> tuple[str, str]:
         rec_type_str = str(rec_type)
 
         _page_apo.fill(sel['sep_input'], sep_str)
-        _page_apo.fill(sel['receipt_input'], receipt_str)
+        _page_apo.type(sel['receipt_input'], receipt_str)
         _page_apo.click(sel['cari_button'])
 
         try:
