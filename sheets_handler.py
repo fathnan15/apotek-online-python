@@ -157,7 +157,5 @@ def commit_row_result(ws, row_idx: int, status: str, note: str, submission_id: s
     updates.append({"range": f"I{row_idx}", "values": [[ts]]})
     updates.append({"range": f"J{row_idx}", "values": [[status or ""]]})
     updates.append({"range": f"K{row_idx}", "values": [[note or "-"]]})
-    updates.append({"range": f"F{row_idx}", "values": [[""]]})
-    updates.append({"range": f"G{row_idx}", "values": [[""]]})
-
+    ws.batch_clear([f"F{row_idx}", f"G{row_idx}"])
     ws.batch_update(updates)
