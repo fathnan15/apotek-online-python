@@ -10,10 +10,12 @@ _playwright = None
 _browser    = None
 _page       = None
 
-async def init_sirs_manual(cdp_endpoint: str = "http://127.0.0.1:9222"):
+async def init_sirs_manual(cdp_endpoint: str = "http://127.0.0.1:9222", date: str | None = None, bulan: str | None = None):
     """
     Attach to your already-open Chrome profile.
     Then pause so you can manually choose filters and click 'Tampilkan'.
+
+    If `date` and `bulan` are provided, they will be used without prompting.
     """
     global _playwright, _browser, _page
     # REMOVE: async with async_playwright() as p:
@@ -27,8 +29,11 @@ async def init_sirs_manual(cdp_endpoint: str = "http://127.0.0.1:9222"):
             print("⚠️  Timeout while navigating to SIRS app. Please ensure the URL is correct.")
             return
 
-    date = input("Enter the date (DD) to filter by: ")
-    bulan = input("Enter the bulan to filter by: ")
+    # prompt only when not provided
+    if date is None:
+        date = input("Enter the date (DD) to filter by: ")
+    if bulan is None:
+        bulan = input("Enter the bulan to filter by: ")
 
     await _page.select_option("#urut", "Nama")
     await _page.select_option("#jenis_rawat", "Rawat Jalan")

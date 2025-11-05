@@ -10,7 +10,7 @@ SIRS_URL = "http://10.67.2.229/sirs/index.php?XP_xrptoolrun_xrptools=3&run=y&rp_
 SHEET_NAME = "temp daftar obat"
 
 # === Your predefined doctor list (Penulis Resep IDs) ===
-DOCTOR_IDS = ["23","595","476","1914","1922","580","721","1986","142","277","3140","647","14","56","1987","1487","225","1577","1967","1488","13","3072","621","3364","2926","2466","140","3123","2060","1599","3449","1919","2436","1237","2662","2426","1920","1364","3365","2916","469","266","1943","553","1590","2259"]  # example subset
+DOCTOR_IDS = ["595","721","647","241","277","1914","1987","547","23","225","140","56","1578","2916","1364","1967","3123","1944","545","549","476","1599","2060","2933","2926","13","580","1596","1922","141","1919","3361","1577","3057","2466","617","1590","3365","3072","565","3449","266","1604","2965","621","14","238","807","3192","1986","3485","469","226","1488","1487","2427","2259","2509","28","2277","142","3191","2467","3140","919","1990","521","3364","2210","1079","2271","2209","1943","57","2894","1985","3098","1237","2436","262","553","1920","1926","3453","2294","3326","3366","1653","161","3448","30"]
 
 
 # === DATE RANGE HANDLER ==================================================
@@ -178,8 +178,8 @@ async def run_extraction():
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, lambda: input("Press Enter to continue when ready..."))
 
-    for doc_id in DOCTOR_IDS:
-        print(f"\n👩‍⚕️ Processing doctor ID: {doc_id}")
+    for index,doc_id in enumerate(DOCTOR_IDS):
+        print(f"\n👩‍⚕️ num {index+1} : Processing doctor ID: {doc_id}")
 
         # select doctor
         await page.select_option("#s_8_", doc_id)
@@ -200,7 +200,7 @@ async def run_extraction():
             print(f"⚠️ No data for doctor {doc_id}")
             continue
 
-        labeled_rows = [[doc_id] + r for r in rows]
+        labeled_rows = [r for r in rows]
         ws.append_rows(labeled_rows, value_input_option="USER_ENTERED")
         print(f"✅ Uploaded {len(labeled_rows)} rows for doctor {doc_id} to sheet.")
 
