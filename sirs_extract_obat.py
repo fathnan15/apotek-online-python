@@ -10,7 +10,50 @@ SIRS_URL = "http://10.67.2.229/sirs/index.php?XP_xrptoolrun_xrptools=3&run=y&rp_
 SHEET_NAME = "temp daftar obat"
 
 # === Your predefined doctor list (Penulis Resep IDs) ===
-DOCTOR_IDS = ["595","721","647","241","277","1914","1987","547","23","225","140","56","1578","2916","1364","1967","3123","1944","545","549","476","1599","2060","2933","2926","13","580","1596","1922","141","1919","3361","1577","3057","2466","617","1590","3365","3072","565","3449","266","1604","2965","621","14","238","807","3192","1986","3485","469","226","1488","1487","2427","2259","2509","28","2277","142","3191","2467","3140","919","1990","521","3364","2210","1079","2271","2209","1943","57","2894","1985","3098","1237","2436","262","553","1920","1926","3453","2294","3326","3366","1653","161","3448","30"]
+DOCTOR_IDS = []
+def prompt_doctor_ids():
+    """
+    Prompt user to provide doctor IDs.
+    - Enter comma-separated IDs (e.g. 595,721,647)
+    - Or enter @filepath to read one ID per line from a file
+    - Or press Enter to use the DEFAULT DOCTOR_IDS from the script
+    Returns a list of string IDs (only digit tokens kept).
+    """
+    s = input(
+        "Provide doctor IDs (comma-separated), or '@path/to/file' one-per-line,\n"
+        "or press Enter to use built-in default list: "
+    ).strip()
+
+    if not s:
+        print("Using built-in DOCTOR_IDS (default).")
+        return DOCTOR_IDS.copy()
+
+    # file mode: @filename
+    if s.startswith("@"):
+        path = s[1:].strip()
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                lines = [ln.strip() for ln in f if ln.strip()]
+            # collect all digit tokens
+            ids = []
+            for ln in lines:
+                ids.extend(re.findall(r"\d+", ln))
+            ids = [x for x in ids if x]
+            print(f"Loaded {len(ids)} IDs from file: {path}")
+            return ids if ids else DOCTOR_IDS.copy()
+        except Exception as e:
+            print(f"❌ Error reading file '{path}': {e}. Using default list.")
+            return DOCTOR_IDS.copy()
+
+    # otherwise treat as comma/space-separated string
+    tokens = re.findall(r"\d+", s)
+    if tokens:
+        print(f"Using {len(tokens)} IDs provided on terminal.")
+        return tokens
+    else:
+        print("No valid IDs found in input. Using default DOCTOR_IDS.")
+        return DOCTOR_IDS.copy()
+
 
 
 # === DATE RANGE HANDLER ==================================================
@@ -138,9 +181,15 @@ def open_sheet():
     scopes = ["https://www.googleapis.com/auth/spreadsheets"]
     creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_PATH, scopes=scopes)
     client = gspread.authorize(creds)
+    #ss for drug_bot
     ss = client.open_by_url(
         "https://docs.google.com/spreadsheets/d/1MdEQrxNS6kuHkwks8Fgg6q29HxJ3qx2br-DPBpGecn4"
     )
+
+    #ss for review
+    # ss = client.open_by_url(
+    #     "https://docs.google.com/spreadsheets/d/1RJZ7eW-q2FrIheWII-0vhb9N0mPV2S5G1mF3vbZpVng"
+    # )
     return ss.worksheet(SHEET_NAME)
 
 
@@ -176,10 +225,11 @@ async def run_extraction():
     print("⏳ Waiting 5 seconds before prompting...")
     await asyncio.sleep(5)
     loop = asyncio.get_running_loop()
+    doctor_ids = await loop.run_in_executor(None, prompt_doctor_ids)
     await loop.run_in_executor(None, lambda: input("Press Enter to continue when ready..."))
 
-    for index,doc_id in enumerate(DOCTOR_IDS):
-        print(f"\n👩‍⚕️ num {index+1} : Processing doctor ID: {doc_id}")
+    for index, doc_id in enumerate(doctor_ids):
+        print(f"\n👩‍⚕️ num {index+1} of {len(doctor_ids)} : Processing doctor ID: {doc_id}")
 
         # select doctor
         await page.select_option("#s_8_", doc_id)
