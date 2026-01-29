@@ -1,19 +1,37 @@
-# submit_main.py
-
-from apotek_runner  import init_apotek, submit_to_apotek, close_apotek
-from sheets_handler import get_worksheet, read_all_records, update_sep_row, claim_row, commit_row_result
-from config import WORKSHEET_NAME
+# submit_main.py (only change: main() uses optional start/end args)
 import time
 import sys
 import uuid
-
+from apotek_runner  import init_apotek, submit_to_apotek, close_apotek
+from sheets_handler import get_worksheet, read_all_records, update_sep_row, claim_row, commit_row_result
+from config import WORKSHEET_NAME
 
 def main():
+    # Optional CLI args:
+    # python submit_main.py [start_row] [end_row]
+    # start_row/end_row are sheet row numbers (data rows start at 2)
+    start_row = int(sys.argv[1]) if len(sys.argv) > 1 else 2
+    end_row   = int(sys.argv[2]) if len(sys.argv) > 2 else None
+
     ws      = get_worksheet(WORKSHEET_NAME)
     records = read_all_records(ws)
 
+    # If a concrete end_row is given, slice the records so we only iterate the requested rows.
+    # records corresponds to sheet rows starting at 2 -> idx = row_index_in_sheet
+    if end_row is not None:
+        # compute python slice indices: records index 0 == sheet row 2
+        slice_start = max(0, start_row - 2)
+        slice_end = max(0, end_row - 1)  # exclusive end for python slice
+        records = records[slice_start:slice_end]
+        enumerated_start = start_row
+    else:
+        # start enumerating at start_row but include all records after that
+        records = records[start_row - 2 :]
+        enumerated_start = start_row
+
     init_apotek()
-    for idx, row in enumerate(records, start=2):
+    for offset, row in enumerate(records):
+        idx = enumerated_start + offset  # actual sheet row number
         # Skip already‐processed rows (idempotency): if submission_id or status present, skip
         if (row.get("submission_id", "") or "").strip() or (row.get("status", "") or "").strip():
             print(f"⏭ Row {idx} already done (submission_id/status present).")
@@ -52,7 +70,6 @@ def main():
             except Exception:
                 pass
             print(f"❌ Row {idx} failed with exception: {e}")
-
 
     close_apotek()
     print("✅ All submissions complete.")
