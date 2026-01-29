@@ -82,11 +82,13 @@ def write_row_sync(ws, row, msg_text, kode_val):
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1MdEQrxNS6kuHkwks8Fgg6q29HxJ3qx2br-DPBpGecn4/edit?gid=1523826715#gid=1523826715"
 SHEET_RESEP = "daftar resep"
 SHEET_OBAT = "daftar obat"
+START_ROW = 2 
 
 CDP_ENDPOINT = "http://127.0.0.1:9222"
 BASE_URL = "https://apotek.bpjs-kesehatan.go.id/apotek/"
 SELECTORS = {
     "resep_filter": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_GvDaftarResep_DXFREditorcol13_I",
+    "sep_filter": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_GvDaftarResep_DXFREditorcol3_I",
     "btn_input_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_GvDaftarResep_cell0_11_BtnInputObat_CD",
     "kode_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_TabPageObat_CboKdObatNR_I",
     "harga_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_TabPageObat_TxtHrgTagObatNR_I",
@@ -141,7 +143,7 @@ def build_obat_row_map(ws_obat):
             continue
 
         # Normalize keys: strip(), lowercase, and remove leading zeros
-        no_resep = str(row[receipt_idx]).strip().replace("'", "").lstrip("0").lower()
+        no_resep = str(row[receipt_idx]).strip().replace("'", "").zfill(5).lower()
         kode_obat = str(row[apol_idx]).strip().replace("'", "").lstrip("0").lower()
         status = str(row[status_idx]).strip().lower() if len(row) > status_idx else ""
 
@@ -161,12 +163,12 @@ def auto_input():
 
     # ThreadPoolExecutor reused for ordered background writes (we wait on each)
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        for i, resep in enumerate(resep_records, start=2):
+        for i, resep in enumerate(resep_records, start=START_ROW):
             status = str(resep.get("status", "")).strip().lower()
             if status in ("normal","done", "error", "not_found", "checked","null"):
                 continue
 
-            no_resep = str(resep.get("receipt_num", "")).strip()
+            no_resep = str(resep.get("receipt_num", "")).strip().zfill(5)
             no_sep = str(resep.get("sep_num", "")).strip()
             if not no_resep:
                 print(f"⚠️ Row {i} missing resep number.")
@@ -176,7 +178,7 @@ def auto_input():
 
             related_obats = [
                 o for o in obat_records
-                if str(o.get("receipt_num", "")).strip() == no_resep
+                if str(o.get("receipt_num", "")).strip().zfill(5) == no_resep
                 and str(o.get("status", "")).strip().lower() not in ("normal","done", "error", "not_found", "checked","null")
             ]
             print(f"  📝 Found {len(related_obats)} pending obat for this resep.")
@@ -187,11 +189,18 @@ def auto_input():
 
             page.goto(BASE_URL + "DaftarResep.aspx")
             page.wait_for_load_state("networkidle")
+            page.fill(SELECTORS["sep_filter"], no_sep)
+            page.keyboard.press("Enter")
+            time.sleep(0.5)
             page.fill(SELECTORS["resep_filter"], no_resep)
             page.keyboard.press("Enter")
+            time.sleep(0.5)
 
             try:
-                page.wait_for_selector(f"text={no_resep}", timeout=15000)
+                # Wait for table to update with filtered results
+                page.wait_for_load_state("networkidle", timeout=10000)
+                # Wait for either no_resep or no_sep to appear in the table
+                page.wait_for_selector(f"text=/{no_resep}|{no_sep}/", timeout=15000)
             except Exception:
                 print(f"❌ Resep {no_resep} not found in table.")
                 safe_update_cell(ws_resep, f"G{i}", "not_found")
@@ -311,7 +320,23 @@ def auto_input():
                 # proceed to fill qty & save as before
                 time.sleep(0.2)
                 page.fill(SELECTORS["qty_obat"], qty)
-                page.click(SELECTORS["btn_simpan"])
+                time.sleep(0.2)
+                
+                # Verify qty was filled correctly
+                filled_qty = page.eval_on_selector(SELECTORS["qty_obat"], "el => el.value").strip()
+                if filled_qty != qty:
+                    print(f"⚠️ Qty mismatch: expected '{qty}', got '{filled_qty}'. Retrying fill.")
+                    page.fill(SELECTORS["qty_obat"], "")
+                    time.sleep(0.1)
+                    page.fill(SELECTORS["qty_obat"], qty)
+                    filled_qty = page.eval_on_selector(SELECTORS["qty_obat"], "el => el.value").strip()
+                
+                if filled_qty == qty:
+                    page.click(SELECTORS["btn_simpan"])
+                else:
+                    print(f"❌ Failed to set qty to {qty}. Got '{filled_qty}'. Skipping save.")
+                    resep_has_error = True
+                    continue
 
                 message = handle_dialog(page)
                 print(f"💬 {message or 'No alert dialog detected.'}")
@@ -352,6 +377,10 @@ def auto_input():
     print("🏁 All resep processed safely and completely.")
 
 if __name__ == "__main__":
-    if input("Enter sheet name for resep (or leave blank for default 'daftar resep'): ").strip():
-        SHEET_RESEP = input("Sheet Name for Resep (e.g. daftar resep): ").strip()
+    user_input = input("Enter sheet name for resep (or leave blank for default 'daftar resep'): ").strip()
+    start_row = input("Enter start row number (or leave blank for default 2): ").strip()
+    if user_input:
+        SHEET_RESEP = user_input
+    if start_row.isdigit():
+        START_ROW = int(start_row)
     auto_input()
