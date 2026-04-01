@@ -196,3 +196,5 @@ cython_debug/
 # Asset files
 assets/
 .~lock.list doc maret.xlsx#
+*.xlsx
+

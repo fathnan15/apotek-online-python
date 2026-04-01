@@ -6,7 +6,7 @@ from google.oauth2.service_account import Credentials
 from playwright.async_api import async_playwright, TimeoutError as PWTimeoutError
 from config import SERVICE_ACCOUNT_PATH
 
-SIRS_URL = "http://10.67.2.229/sirs/index.php?XP_xrptoolrun_xrptools=3&run=y&rp_id=17"
+SIRS_URL = "http://10.67.2.223/sirs/index.php?XP_xrptoolrun_xrptools=3&run=y&rp_id=17"
 SHEET_NAME = "temp daftar obat"
 
 # === Your predefined doctor list (Penulis Resep IDs) ===
@@ -166,7 +166,7 @@ async def set_date_range(page, auto_submit: bool = True):
 
 
 # === PLAYWRIGHT SESSION ATTACH ===========================================
-async def attach_browser(cdp_endpoint="http://127.0.0.1:9222"):
+async def attach_browser(cdp_endpoint="http://127.0.0.1:8000"):
     """Attach to existing Chrome session."""
     p = await async_playwright().start()
     browser = await p.chromium.connect_over_cdp(cdp_endpoint)
@@ -221,7 +221,6 @@ async def run_extraction():
     await page.wait_for_selector("#rpf", timeout=15000)
     print("✅ Report filter form ready.")
 
-    # await set_date_range(page)
     print("⏳ Waiting 5 seconds before prompting...")
     await asyncio.sleep(5)
     loop = asyncio.get_running_loop()
@@ -250,7 +249,25 @@ async def run_extraction():
             print(f"⚠️ No data for doctor {doc_id}")
             continue
 
-        labeled_rows = [r for r in rows]
+        # Modify rows to clean/clear specific columns
+        labeled_rows = []
+        for r in rows:
+            row_data = list(r) # Ensure it's a mutable list
+            
+            # Clean Column H (index 7) - Remove " [FORNAS]"
+            if len(row_data) > 7 and isinstance(row_data[7], str):
+                row_data[7] = row_data[7].replace(" [FORNAS]", "")
+            
+            # Clear Column K (index 10)
+            if len(row_data) > 10:
+                row_data[10] = ""
+            
+            # Clear Column O (index 14)
+            if len(row_data) > 14:
+                row_data[14] = ""
+                
+            labeled_rows.append(row_data)
+
         ws.append_rows(labeled_rows, value_input_option="USER_ENTERED")
         print(f"✅ Uploaded {len(labeled_rows)} rows for doctor {doc_id} to sheet.")
 
@@ -259,7 +276,6 @@ async def run_extraction():
     print("\n🏁 Extraction completed.")
     await browser.close()
     await p.stop()
-
 
 if __name__ == "__main__":
     asyncio.run(run_extraction())

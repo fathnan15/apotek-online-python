@@ -1,100 +1,83 @@
-# auto_input_obat_safe_patched.py
-from playwright.sync_api import sync_playwright
-import gspread
-from google.oauth2.service_account import Credentials
-from config import SERVICE_ACCOUNT_PATH
+# auto_input_obat_v9_full_revise.py
+import argparse
+import threading
 import time
-
-# ==== RATE-LIMIT SAFE GOOGLE UPDATE HELPERS ====
 import random
-from gspread.exceptions import APIError
 from datetime import datetime
 import concurrent.futures
 
-def safe_update_cell(ws, cell, value, retries=3):
-    """
-    Safe Google Sheets updater with retry & backoff to prevent 429 rate limit.
-    Also writes a timestamp to column F when updating the resep sheet.
-    """
+from playwright.sync_api import sync_playwright
+import gspread
+from google.oauth2.service_account import Credentials
+from gspread.exceptions import APIError
 
-    for attempt in range(retries):
-        try:
-            # primary update
-            ws.update_acell(cell, value)
-
-            # if this is the resep sheet, also write timestamp to column F of same row
-            try:
-                # match row number from cell (e.g. "G12" -> "12")
-                row_digits = "".join(ch for ch in str(cell) if ch.isdigit())
-                if row_digits and getattr(ws, "title", "").lower() == SHEET_RESEP.lower():
-                    ts_cell = f"F{row_digits}"
-                    ts_val = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    ws.update_acell(ts_cell, ts_val)
-            except APIError as e_inner:
-                # surface quota errors to outer handler so retry/backoff can happen
-                if "Quota exceeded" in str(e_inner):
-                    raise e_inner
-                # otherwise don't block the main update; log and continue
-                print(f"⚠️ Failed to write timestamp {ts_cell}: {e_inner}")
-
-            time.sleep(1.1)  # Throttle slightly to stay under quota
-            return True
-        except APIError as e:
-            if "Quota exceeded" in str(e):
-                wait = 10 * (attempt + 1) + random.random() * 3
-                print(f"⚠️ Quota exceeded. Cooling down {wait:.1f}s before retry...")
-                time.sleep(wait)
-            else:
-                raise
-    print(f"❌ Failed to update cell {cell} after {retries} retries.")
-    return False
-
-# --- NEW: small, deterministic writer wrapper that preserves ordering ---
-def write_row_sync(ws, row, msg_text, kode_val):
-    """
-    Blocking wrapper that writes status and message to Google Sheet using safe_update_cell.
-    Designed to be executed in a worker thread but the caller will wait for completion.
-    Returns status string: "done" or "error".
-    """
-    msg = (msg_text or "").strip()
-    msg_lower = msg.lower()
-    try:
-        # classify result
-        if "obat berhasil disimpan" in msg_lower or "berhasil" in msg_lower:
-            # success
-            status = "done"
-            print(f" ✅ 200-Success : Updating row {row} for obat {kode_val}")
-        else:
-            # non-success / message may contain error
-            status = "error"
-            print(f" ⚠️  Non-success : Updating row {row} for obat {kode_val} -> '{msg}'")
-
-        # write status and message (H = status, I = message) - keep your previous layout
-        safe_update_cell(ws, f"H{row}", status)
-        safe_update_cell(ws, f"I{row}", msg)
-        # return status for caller to inspect
-        return status
-    except Exception as e:
-        print(f"❌ Exception while writing row {row}: {e}")
-        return "error"
+from config import SERVICE_ACCOUNT_PATH
 
 # ==== CONFIGURATION ====
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1MdEQrxNS6kuHkwks8Fgg6q29HxJ3qx2br-DPBpGecn4/edit?gid=1523826715#gid=1523826715"
 SHEET_RESEP = "daftar resep"
 SHEET_OBAT = "daftar obat"
-START_ROW = 2 
 
-CDP_ENDPOINT = "http://127.0.0.1:9222"
 BASE_URL = "https://apotek.bpjs-kesehatan.go.id/apotek/"
 SELECTORS = {
     "resep_filter": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_GvDaftarResep_DXFREditorcol13_I",
     "sep_filter": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_GvDaftarResep_DXFREditorcol3_I",
     "btn_input_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_GvDaftarResep_cell0_11_BtnInputObat_CD",
     "kode_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_TabPageObat_CboKdObatNR_I",
-    "harga_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_TabPageObat_TxtHrgTagObatNR_I",
     "qty_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_TabPageObat_TxtJmlObatNR_I",
-    "btn_simpan": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_TabPageObat_BtnSimpanNR_CD"
+    "btn_simpan": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_TabPageObat_BtnSimpanNR_CD",
+    "table_obat": "#ctl00_ctl00_ASPxSplitter1_Content_ContentSplitter_MainContent_GvObat_DXMainTable",
+    "loading_overlay": ".dxgvLoadingDiv_Glass"
 }
+
+# ==== ARGUMENT PARSING ====
+def parse_args():
+    parser = argparse.ArgumentParser(description="BPJS Auto Input Worker")
+    parser.add_argument("--port", type=str, required=True, help="Chrome CDP Port (e.g., 9222)")
+    parser.add_argument("--start-row", type=int, required=True, help="First row to process")
+    parser.add_argument("--end-row", type=int, required=True, help="Last row to process")
+    return parser.parse_args()
+
+# ==== BATCH UPDATER SYSTEM ====
+class SheetBatchUpdater:
+    def __init__(self, ws, batch_size=20):
+        self.ws = ws
+        self.batch_size = batch_size
+        self.updates = []
+        self.lock = threading.Lock()
+
+    def add_update(self, range_name, values):
+        with self.lock:
+            self.updates.append({'range': range_name, 'values': [values]})
+            if len(self.updates) >= self.batch_size:
+                self._execute_flush()
+
+    def flush(self):
+        with self.lock:
+            self._execute_flush()
+
+    def _execute_flush(self):
+        if not self.updates:
+            return
+            
+        for attempt in range(4):
+            try:
+                self.ws.batch_update(self.updates)
+                print(f"📦 Flushed {len(self.updates)} updates to '{self.ws.title}' successfully.")
+                self.updates = []
+                return
+            except APIError as e:
+                if "Quota exceeded" in str(e):
+                    wait = (attempt + 1) * 5 + random.random() * 2
+                    print(f"⚠️ Quota exceeded during batch flush. Cooling down {wait:.1f}s...")
+                    time.sleep(wait)
+                else:
+                    print(f"❌ Unrecoverable API Error during flush: {e}")
+                    return
+            except Exception as e:
+                print(f"❌ Network/Unknown error during flush: {e}")
+                time.sleep(2)
+        print("❌ Failed to flush batch after 4 attempts. Data may be out of sync.")
 
 # ==== GOOGLE SHEET HANDLER ====
 def open_sheet():
@@ -104,283 +87,267 @@ def open_sheet():
     ss = client.open_by_url(SPREADSHEET_URL)
     return ss.worksheet(SHEET_RESEP), ss.worksheet(SHEET_OBAT)
 
-# ==== PLAYWRIGHT HELPERS ====
-def attach_browser():
+# ==== UTILS ====
+def attach_browser(port):
     pw = sync_playwright().start()
-    browser = pw.chromium.connect_over_cdp(CDP_ENDPOINT)
+    cdp_url = f"http://127.0.0.1:{port}"
+    browser = pw.chromium.connect_over_cdp(cdp_url)
     context = browser.contexts[0] if browser.contexts else browser.new_context()
     page = context.pages[0] if context.pages else context.new_page()
-    print("✅ Attached to existing Chrome session.")
-    return browser, page
+    return browser, page, pw
 
 def handle_dialog(page):
     try:
-        dialog = page.wait_for_event("dialog", timeout=8000)
+        dialog = page.wait_for_event("dialog", timeout=5000)
         msg = dialog.message
         dialog.accept()
         return msg
-    except Exception:
+    except:
         return None
 
 def build_obat_row_map(ws_obat):
-    """Build a mapping (receipt_num, apol_id) → row number for quick lookup."""
     values = ws_obat.get_all_values()
-    if not values:
-        return {}
-
+    if not values: return {}
+    
     headers = [h.strip().lower() for h in values[0]]
     try:
-        receipt_idx = headers.index("receipt_num")
-        apol_idx = headers.index("apol_id")
-        status_idx = headers.index("status")
-    except ValueError:
-        print(f"⚠️ Header mismatch. Headers found: {headers}")
+        r_idx = headers.index("receipt_num")
+        p_idx = headers.index("presc_id")
+        a_idx = headers.index("apol_id")
+    except ValueError as e:
+        print(f"⚠️ Header missing: {e}. Check sheet headers.")
         return {}
 
     mapping = {}
     for row_num, row in enumerate(values[1:], start=2):
-        if len(row) <= max(receipt_idx, apol_idx):
-            continue
-
-        # Normalize keys: strip(), lowercase, and remove leading zeros
-        no_resep = str(row[receipt_idx]).strip().replace("'", "").zfill(5).lower()
-        kode_obat = str(row[apol_idx]).strip().replace("'", "").lstrip("0").lower()
-        status = str(row[status_idx]).strip().lower() if len(row) > status_idx else ""
-
-        if no_resep and kode_obat and status not in ("normal","done", "error", "not_found", "checked","null"):
-            mapping[(no_resep, kode_obat)] = row_num
-
-    print(f"📊 Loaded {len(mapping)} obat rows into cache.")
+        if len(row) <= max(r_idx, p_idx, a_idx): continue
+        r_val = str(row[r_idx]).strip().replace("'", "").zfill(5).lower()
+        p_val = str(row[p_idx]).strip().lstrip("0").lower()
+        a_val = str(row[a_idx]).strip().replace("'", "").lstrip("0").lower()
+        
+        if r_val and a_val:
+            mapping[(r_val, p_val, a_val)] = row_num
+            
     return mapping
 
-# ==== MAIN ====
-def auto_input():
+def wait_for_loading_gone(page):
+    try:
+        page.wait_for_selector(SELECTORS["loading_overlay"], state="hidden", timeout=10000)
+        time.sleep(0.5)
+    except Exception:
+        pass
+
+def queue_obat_update(updater, row, msg_text, kode_val):
+    msg = (msg_text or "").strip()
+    msg_lower = msg.lower()
+    
+    if any(x in msg_lower for x in ["berhasil", "already input"]):
+        status = "done"
+        print(f" ✅ Success: Row {row} (Obat {kode_val}) -> {status}")
+    else:
+        status = "error"
+        print(f" ⚠️  Error/Message: Row {row} (Obat {kode_val}) -> '{msg}'")
+
+    updater.add_update(f"H{row}:I{row}", [status, msg])
+    return status
+
+# ==== MAIN LOGIC ====
+def auto_input(args):
     ws_resep, ws_obat = open_sheet()
+    
+    # Initialize batch updaters
+    resep_updater = SheetBatchUpdater(ws_resep, batch_size=20)
+    obat_updater = SheetBatchUpdater(ws_obat, batch_size=20)
+    
     resep_records = ws_resep.get_all_records()
     obat_records = ws_obat.get_all_records()
     obat_row_map = build_obat_row_map(ws_obat)
-    browser, page = attach_browser()
+    
+    browser, page, pw = attach_browser(args.port)
 
-    # ThreadPoolExecutor reused for ordered background writes (we wait on each)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-        for i, resep in enumerate(resep_records, start=START_ROW):
-            status = str(resep.get("status", "")).strip().lower()
-            if status in ("normal","done", "error", "not_found", "checked","null"):
-                continue
-
-            no_resep = str(resep.get("receipt_num", "")).strip().zfill(5)
-            no_sep = str(resep.get("sep_num", "")).strip()
-            if not no_resep:
-                print(f"⚠️ Row {i} missing resep number.")
-                continue
-
-            print(f"\n🔎 Processing resep {no_resep} (SEP={no_sep})")
-
-            related_obats = [
-                o for o in obat_records
-                if str(o.get("receipt_num", "")).strip().zfill(5) == no_resep
-                and str(o.get("status", "")).strip().lower() not in ("normal","done", "error", "not_found", "checked","null")
-            ]
-            print(f"  📝 Found {len(related_obats)} pending obat for this resep.")
-            if not related_obats:
-                safe_update_cell(ws_resep, f"G{i}", "null")
-                print(f"✅ Resep {no_resep} marked done (no pending obat).")
-                continue
-
-            page.goto(BASE_URL + "DaftarResep.aspx")
-            page.wait_for_load_state("networkidle")
-            page.fill(SELECTORS["sep_filter"], no_sep)
-            page.keyboard.press("Enter")
-            time.sleep(0.5)
-            page.fill(SELECTORS["resep_filter"], no_resep)
-            page.keyboard.press("Enter")
-            time.sleep(0.5)
-
-            try:
-                # Wait for table to update with filtered results
-                page.wait_for_load_state("networkidle", timeout=10000)
-                # Wait for either no_resep or no_sep to appear in the table
-                page.wait_for_selector(f"text=/{no_resep}|{no_sep}/", timeout=15000)
-            except Exception:
-                print(f"❌ Resep {no_resep} not found in table.")
-                safe_update_cell(ws_resep, f"G{i}", "not_found")
-                continue
-
-            print("🕐 Clicking Input Obat button…")
-            # Wait until grid finishes loading before clicking
-            try:
-                # Wait for overlay to appear and then disappear
-                page.wait_for_selector("div.dxgvLoadingDiv_Glass", state="visible", timeout=5000)
-                page.wait_for_selector("div.dxgvLoadingDiv_Glass", state="hidden", timeout=15000)
-            except:
-                # Overlay might not appear at all (already loaded)
-                pass
-
-            # Re-locate the button (old handles may be detached)
-            buttons = page.query_selector_all(SELECTORS["btn_input_obat"])
-            if not buttons:
-                print(f"❌ No Input Obat button found for resep {no_resep}")
-                continue
-
-            # Now click safely
-            buttons[0].click()
-
-            # ⏳ Wait until redirected to ObatInput.aspx (instead of fixed sleep)
-            try:
-                page.wait_for_url("**/ObatInput.aspx", timeout=30000)
-                page.wait_for_load_state("networkidle")
-                print("✅ ObatInput.aspx fully loaded.")
-            except Exception:
-                print("⚠️ Timeout waiting for ObatInput.aspx, continue anyway.")
-
-            # Track if any obat for this resep produced an error
-            resep_has_error = False
-
-            for obat in related_obats:
-                kode = str(obat.get("apol_id", "")).strip()
-                qty = str(obat.get("qty", "")).strip() or "1"
-                if not kode:
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            for i, resep in enumerate(resep_records, start=2):
+                
+                # Partitioning Enforcement
+                if i < args.start_row or i > args.end_row:
                     continue
 
-                print(f"  💊 Inputting {kode} x{qty} …")
+                status = str(resep.get("status", "")).strip().lower()
+                if status in ("done", "error", "not_found", "null"):
+                    continue
+                    
+                is_revise = (status == "revise")
 
-                # --- robust autocomplete selection (replacement) ---
-                LISTBOX_SELECTOR = "table[id$='CboKdObatNR_DDD_L_LBT']"
-                FIRST_ITEM_ROW = "table[id$='CboKdObatNR_DDD_L_LBT'] tr.dxeListBoxItemRow_Glass"
-                FIRST_ITEM_KD_CELL = "table[id$='CboKdObatNR_DDD_L_LBT'] td[id$='_LBI0T0']"
+                no_resep = str(resep.get("receipt_num", "")).strip().zfill(5)
+                no_sep = str(resep.get("sep_num", "")).strip()
+                presc_id = str(resep.get("presc_id", "")).strip().lstrip("0")
 
-                def read_kode_input_value():
-                    try:
-                        return page.eval_on_selector(SELECTORS["kode_obat"], "el => el.value").strip()
-                    except Exception:
-                        return ""
+                if not no_resep: continue
 
-                # type to trigger autocomplete
-                page.fill(SELECTORS["kode_obat"], "")
-                time.sleep(0.12)
-                page.click(SELECTORS["kode_obat"])
-                page.type(SELECTORS["kode_obat"], kode, delay=50)
+                print(f"\n🔎 Processing Resep: {no_resep} (SEP: {no_sep}, Presc: {presc_id})")
 
-                # wait for the listbox to appear and try to click first item
+                # REVISION FIX: If revise, exclude nothing (). If normal, exclude done/error/null.
+                excluded_obat_statuses = () if is_revise else ("done", "error", "null")
+
+                related_obats = [
+                    o for o in obat_records
+                    if str(o.get("receipt_num", "")).strip().zfill(5) == no_resep
+                    and str(o.get("presc_id", "")).strip().lstrip("0") == presc_id
+                    and str(o.get("status", "")).strip().lower() not in excluded_obat_statuses
+                ]
+                
+                if not related_obats:
+                    print("  ✅ No pending drugs for this resep.")
+                    resep_updater.add_update(f"G{i}:H{i}", ["", "done"])
+                    continue
+
+                # ==========================================
+                # 1. NAVIGATION PHASE
+                # ==========================================
+                nav_success = False
                 try:
-                    page.wait_for_selector(LISTBOX_SELECTOR, timeout=6000)
-                    try:
-                        page.click(FIRST_ITEM_KD_CELL, timeout=3000)
-                    except Exception:
-                        try:
-                            page.click(FIRST_ITEM_ROW, timeout=3000)
-                        except Exception:
-                            page.keyboard.press("ArrowDown")
-                            time.sleep(0.18)
-                            page.keyboard.press("Enter")
-                except Exception:
-                    # listbox never showed — fallback to ArrowDown/Enter
-                    time.sleep(0.9)
-                    page.keyboard.press("ArrowDown")
-                    time.sleep(0.18)
-                    page.keyboard.press("Enter")
-
-                # short pause to let widget propagate selection to fields
-                time.sleep(0.5)
-
-                # verify selection
-                selected_val = read_kode_input_value()
-                if selected_val and (kode in selected_val or selected_val in kode):
-                    ui_ok = True
-                else:
-                    try:
-                        found = page.query_selector(f"xpath=//table[contains(@id,'TabPageObat')]//td[contains(., '{kode}')]")
-                        ui_ok = bool(found)
-                    except:
-                        ui_ok = False
-
-                if not ui_ok:
-                    print(f"⚠️ Autocomplete selection for {kode} may have failed — selected_val='{selected_val}'. Will attempt one retry.")
-                    # single retry
-                    page.fill(SELECTORS["kode_obat"], "")
-                    time.sleep(0.12)
-                    page.click(SELECTORS["kode_obat"])
-                    page.type(SELECTORS["kode_obat"], kode, delay=80)
-                    try:
-                        page.wait_for_selector(LISTBOX_SELECTOR, timeout=5000)
-                        page.click(FIRST_ITEM_KD_CELL)
-                    except:
-                        page.keyboard.press("ArrowDown")
+                    page.goto(BASE_URL + "DaftarResep.aspx")
+                    page.wait_for_load_state("networkidle")
+                    
+                    if no_sep:
+                        page.fill(SELECTORS["sep_filter"], no_sep)
                         page.keyboard.press("Enter")
-                    time.sleep(0.6)
-                    selected_val = read_kode_input_value()
-                    ui_ok = (selected_val and (kode in selected_val or selected_val in kode))
-
-                if not ui_ok:
-                    print(f"❌ Failed to reliably select kode {kode}. Selected value after retry: '{selected_val}'. Skipping this obat for now.")
-                    # Mark as error in sheet optionally (we skip for now)
-                    resep_has_error = True
-                    continue
-
-                # proceed to fill qty & save as before
-                time.sleep(0.2)
-                page.fill(SELECTORS["qty_obat"], qty)
-                time.sleep(0.2)
-                
-                # Verify qty was filled correctly
-                filled_qty = page.eval_on_selector(SELECTORS["qty_obat"], "el => el.value").strip()
-                if filled_qty != qty:
-                    print(f"⚠️ Qty mismatch: expected '{qty}', got '{filled_qty}'. Retrying fill.")
-                    page.fill(SELECTORS["qty_obat"], "")
-                    time.sleep(0.1)
-                    page.fill(SELECTORS["qty_obat"], qty)
-                    filled_qty = page.eval_on_selector(SELECTORS["qty_obat"], "el => el.value").strip()
-                
-                if filled_qty == qty:
-                    page.click(SELECTORS["btn_simpan"])
-                else:
-                    print(f"❌ Failed to set qty to {qty}. Got '{filled_qty}'. Skipping save.")
-                    resep_has_error = True
-                    continue
-
-                message = handle_dialog(page)
-                print(f"💬 {message or 'No alert dialog detected.'}")
-
-                # Update Google Sheet immediately (run in thread but wait here to preserve ordering)
-                row = obat_row_map.get((no_resep, kode))
-
-                if not row:
-                    print(f"DEBUG: lookup key=({no_resep}, {kode})")
-                    print("DEBUG: available keys (sample):", list(obat_row_map.keys())[:5])
-
-                if row:
-                    # Submit to thread executor and wait for completion before moving on
-                    future = executor.submit(write_row_sync, ws_obat, row, message or "", kode)
+                        wait_for_loading_gone(page)
+                    
+                    page.fill(SELECTORS["resep_filter"], no_resep)
+                    page.keyboard.press("Enter")
+                    wait_for_loading_gone(page)
+                    
                     try:
-                        status_result = future.result(timeout=120)  # wait for write to finish
-                        if status_result == "done":
-                            print(f"  ✅ Completed write for row {row} (obat {kode})")
-                        else:
-                            print(f"  ⚠️ Write returned status '{status_result}' for row {row} (obat {kode})")
+                        page.wait_for_selector(f"text={no_resep}", timeout=10000)
+                    except:
+                        print(f"❌ Resep {no_resep} not found in grid.")
+                        resep_updater.add_update(f"G{i}:H{i}", ["", "not_found"])
+                        continue
+
+                    wait_for_loading_gone(page)
+                    
+                    for attempt in range(1, 4):
+                        btn = page.query_selector(SELECTORS["btn_input_obat"])
+                        if not btn:
+                            time.sleep(2)
+                            continue
+                        
+                        try:
+                            btn.click(force=True)
+                            page.wait_for_url("**/ObatInput.aspx", timeout=6000)
+                            page.wait_for_load_state("networkidle")
+                            nav_success = True
+                            break
+                        except Exception:
+                            wait_for_loading_gone(page)
+                            time.sleep(1)
+
+                    if not nav_success:
+                        print(f"❌ Failed to enter input page after 3 attempts.")
+                        resep_updater.add_update(f"G{i}:H{i}", ["", "error"])
+                        continue
+
+                except Exception as e:
+                    print(f"  ❌ Navigation Error: {e}")
+                    resep_updater.add_update(f"G{i}:H{i}", ["", "error"])
+                    continue
+
+                # ==========================================
+                # 2. INPUT PHASE
+                # ==========================================
+                existing_map = {}
+                try:
+                    page.wait_for_selector(SELECTORS["table_obat"], state="visible", timeout=5000)
+                    rows = page.query_selector_all(f"{SELECTORS['table_obat']} tr.dxgvDataRow_Glass")
+                    for r in rows:
+                        cells = r.query_selector_all("td")
+                        if len(cells) > 7:
+                            k_txt = cells[1].inner_text().strip().lstrip("0")
+                            q_txt = cells[7].inner_text().strip()
+                            if k_txt:
+                                existing_map[k_txt] = q_txt
+                except Exception:
+                    pass
+
+                resep_has_error = False
+                for obat in related_obats:
+                    kode_raw = str(obat.get("apol_id", "")).strip()
+                    kode_clean = kode_raw.lstrip("0")
+                    qty = str(obat.get("qty", "")).strip()
+                    
+                    row_key = (no_resep.lower(), presc_id.lower(), kode_clean.lower())
+                    row_num = obat_row_map.get(row_key)
+                    
+                    if not row_num:
+                        print(f"  ⚠️ Could not find sheet row for {kode_raw}")
+                        continue
+
+                    if kode_clean in existing_map:
+                        existing_qty = existing_map[kode_clean]
+                        msg = f"already input qty : {existing_qty}"
+                        executor.submit(queue_obat_update, obat_updater, row_num, msg, kode_raw)
+                        continue
+
+                    print(f"  💊 Inputting {kode_raw} x{qty}...")
+                    try:
+                        page.fill(SELECTORS["kode_obat"], "")
+                        time.sleep(0.1)
+                        page.type(SELECTORS["kode_obat"], kode_raw, delay=50)
+                        time.sleep(0.5)
+                        
+                        try:
+                            page.keyboard.press("ArrowDown")
+                            page.keyboard.press("Enter")
+                        except: pass
+                        
+                        qty_ok = False
+                        for q_attempt in range(3):
+                            page.fill(SELECTORS["qty_obat"], "")
+                            time.sleep(0.1)
+                            page.type(SELECTORS["qty_obat"], qty, delay=50)
+                            time.sleep(0.2)
+                            
+                            filled_val = page.eval_on_selector(SELECTORS["qty_obat"], "el => el.value").strip()
+                            
+                            if filled_val == qty:
+                                qty_ok = True
+                                break
+                            else:
+                                time.sleep(0.5)
+                        
+                        if not qty_ok:
+                            err_msg = f"Qty Mismatch Failed: {filled_val} != {qty}"
+                            queue_obat_update(obat_updater, row_num, err_msg, kode_raw)
                             resep_has_error = True
-                    except concurrent.futures.TimeoutError:
-                        print(f"❌ Timeout while writing row {row} to sheet.")
+                            continue
+
+                        page.click(SELECTORS["btn_simpan"])
+                        msg_alert = handle_dialog(page) or ""
+                        
+                        future = executor.submit(queue_obat_update, obat_updater, row_num, msg_alert, kode_raw)
+                        if future.result() == "error":
+                            resep_has_error = True
+                        time.sleep(1) 
+
+                    except Exception as e:
+                        print(f"  ❌ Error inputting {kode_raw}: {e}")
+                        queue_obat_update(obat_updater, row_num, f"Script Error: {str(e)}", kode_raw)
                         resep_has_error = True
-                else:
-                    print(f"⚠️ Could not find row for resep {no_resep}, obat {kode}")
-                    resep_has_error = True
 
-                time.sleep(1)
+                final_status = "error" if resep_has_error else "done"
+                ts_val = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                resep_updater.add_update(f"G{i}:H{i}", [ts_val, final_status])
+                print(f"✅ Resep {no_resep} finished -> {final_status.upper()}")
 
-            # After processing all obat for this resep, set resep status depending on any obat errors
-            final_status = "error" if resep_has_error else "done"
-            safe_update_cell(ws_resep, f"G{i}", final_status)
-            print(f"✅ Resep {no_resep} completed. Final status: {final_status.upper()}")
-            time.sleep(2.5)
-
-    browser.close()
-    print("🏁 All resep processed safely and completely.")
+    finally:
+        print("\n🛑 Script terminating. Executing final data flush...")
+        resep_updater.flush()
+        obat_updater.flush()
+        browser.close()
+        pw.stop()
 
 if __name__ == "__main__":
-    user_input = input("Enter sheet name for resep (or leave blank for default 'daftar resep'): ").strip()
-    start_row = input("Enter start row number (or leave blank for default 2): ").strip()
-    if user_input:
-        SHEET_RESEP = user_input
-    if start_row.isdigit():
-        START_ROW = int(start_row)
-    auto_input()
+    args = parse_args()
+    auto_input(args)
